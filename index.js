@@ -28,6 +28,18 @@ async function run() {
       const option = await flightListCollection.find(query).toArray();
       res.send(option);
     });
+
+    app.get("/airLines", async (req, res) => {
+      const airLines = [];
+      const option = await flightListCollection.find({}).toArray();
+      const results = option.map((opt) => opt.Onwards[0].OperatingCarrierName);
+      results.forEach((result) => {
+        if (!airLines.includes(result)) {
+          airLines.push(result);
+        }
+      });
+      res.send(airLines);
+    });
   } finally {
   }
 }
