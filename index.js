@@ -29,6 +29,7 @@ async function run() {
       res.send(option);
     });
 
+    //common airlines
     app.get("/airLines", async (req, res) => {
       const airLines = [];
       const option = await flightListCollection.find({}).toArray();
@@ -41,48 +42,65 @@ async function run() {
       res.send(airLines);
     });
 
-    app.get("/airLines/:name", async (req, res) => {
-      const name = req.params.name;
-      // const query = { Onwards: [{ OperatingCarrierName: name }] };
-      const result = await flightListCollection.find({}).toArray();
-      const airLine = result.filter(
-        (opt) => opt.Onwards[0].OperatingCarrierName === name
-      );
+    app.post("/airLines/filtering", async (req, res) => {
+      const filter = req.body;
+      console.log(filter);
+      const minPrice = filter.price.split(",")[0];
+      const maxPrice = filter.price.split(",")[1];
 
+      const startingValue = filter.time.split(" ")[0];
+      const endingValue = filter.time.split(" ")[2];
+
+      const airLine = await flightListCollection
+        .find({
+          $and: [
+            {
+              Onwards: {
+                $elemMatch: { OperatingCarrierName: filter.name },
+              },
+            },
+            { TotalPrice: { $gte: minPrice, $lte:maxPrice } },
+
+            // {DepartureTime:{$gte: startingValue, $lte: endingValue}},
+          ],
+        })
+        .toArray();
+      console.log(airLine);
       res.send(airLine);
     });
 
-    // //Depart time
-    app.get("/departTimes/:time", async (req, res) => {
-      const time = req.params.time;
-      console.log(time);
+    // // //Depart time
+    // app.get("/departTimes/:time", async (req, res) => {
+    //   const time = req.params.time;
+    //   console.log(time);
 
-      const result = await flightListCollection.find({}).toArray();
+    //   const result = await flightListCollection.find({}).toArray();
 
-      const startingValue = time.split(" ")[0];
-      const endingValue = time.split(" ")[2];
-      const departFlights = result.filter(
-        (flight) =>
-          flight.Onwards[0].DepartureTime.slice(11, 16) >= startingValue &&
-          flight.Onwards[0].DepartureTime.slice(11, 16) <= endingValue
-      );
+    //   const startingValue = time.split(" ")[0];
+    //   const endingValue = time.split(" ")[2];
+    //   const departFlights = result.filter(
+    //     (flight) =>
+    //       flight.Onwards[0].DepartureTime.slice(11, 16) >= startingValue &&
+    //       flight.Onwards[0].DepartureTime.slice(11, 16) <= endingValue
+    //   );
 
-      res.send(departFlights);
-    });
+    //   res.send(departFlights);
+    // });
 
-    //price filter
-    app.get("/priceFilter/:price", async (req, res) => {
-      const price = req.params.price;
-      console.log(price);
-      const result = await flightListCollection.find({}).toArray();
-      const minPrice = price.split(",")[0];
-      const maxPrice = price.split(",")[1];
-      const priceFilterFlights = result.filter(
-        (flight) =>
-          flight.TotalPrice >= minPrice && flight.TotalPrice <= maxPrice
-      );
-      res.send(priceFilterFlights);
-    });
+
+
+    // price filter
+    // app.get("/priceFilter/:price", async (req, res) => {
+    //   const price = req.params.price;
+    //   const result = await flightListCollection.find({}).toArray();
+    //   const minPrice = price.split(",")[0];
+    //   const maxPrice = price.split(",")[1];
+    //   const priceFilterFlights = result.filter(
+    //     (flight) =>
+    //       flight.TotalPrice >= minPrice && flight.TotalPrice <= maxPrice
+    //   );
+    //   res.send(priceFilterFlights);
+    // });
   } finally {
   }
 }
