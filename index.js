@@ -42,11 +42,17 @@ async function run() {
       res.send(airLines);
     });
 
+    //filtering
+
     app.post("/airLines/filtering", async (req, res) => {
       const filter = req.body;
+
       console.log(filter);
-      const minPrice = filter.price.split(",")[0];
-      const maxPrice = filter.price.split(",")[1];
+      filter.price = filter.price == "" ? "1000,5000" : filter.price;
+      filter.time = filter.time == "" ? "00:00 to 23:00" : filter.time;
+
+      const minPrice = parseInt(filter.price.split(",")[0]);
+      const maxPrice = parseInt(filter.price.split(",")[1]);
 
       const startingValue = filter.time.split(" ")[0];
       const endingValue = filter.time.split(" ")[2];
@@ -56,51 +62,19 @@ async function run() {
           $and: [
             {
               Onwards: {
-                $elemMatch: { OperatingCarrierName: filter.name },
+                $elemMatch: {
+                  OperatingCarrierName: filter.name,
+                  DepartureTime: { $gte: startingValue, $lte: endingValue },
+                },
               },
             },
-            { TotalPrice: { $gte: minPrice, $lte:maxPrice } },
-
-            // {DepartureTime:{$gte: startingValue, $lte: endingValue}},
+            { TotalPrice: { $gte: minPrice, $lte: maxPrice } },
           ],
         })
         .toArray();
-      console.log(airLine);
+
       res.send(airLine);
     });
-
-    // // //Depart time
-    // app.get("/departTimes/:time", async (req, res) => {
-    //   const time = req.params.time;
-    //   console.log(time);
-
-    //   const result = await flightListCollection.find({}).toArray();
-
-    //   const startingValue = time.split(" ")[0];
-    //   const endingValue = time.split(" ")[2];
-    //   const departFlights = result.filter(
-    //     (flight) =>
-    //       flight.Onwards[0].DepartureTime.slice(11, 16) >= startingValue &&
-    //       flight.Onwards[0].DepartureTime.slice(11, 16) <= endingValue
-    //   );
-
-    //   res.send(departFlights);
-    // });
-
-
-
-    // price filter
-    // app.get("/priceFilter/:price", async (req, res) => {
-    //   const price = req.params.price;
-    //   const result = await flightListCollection.find({}).toArray();
-    //   const minPrice = price.split(",")[0];
-    //   const maxPrice = price.split(",")[1];
-    //   const priceFilterFlights = result.filter(
-    //     (flight) =>
-    //       flight.TotalPrice >= minPrice && flight.TotalPrice <= maxPrice
-    //   );
-    //   res.send(priceFilterFlights);
-    // });
   } finally {
   }
 }
